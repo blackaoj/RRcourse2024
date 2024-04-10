@@ -73,7 +73,8 @@ Consider the Source vs Visual mode and Rendering on Save options.
 
 Some basic text formatting includes `*Italics*` or `_Italics_` (*Italics*) and `**Bold**` or `__Bold__` (**Bold**) text. ***Bold***
 
-Some text
+Some text    
+
 sdajiodf
 
 Some text  
