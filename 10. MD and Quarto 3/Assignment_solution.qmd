@@ -53,8 +53,10 @@ The most popular episode of the season was "Fire and Blood", in which:
 You can see how the viewership of the episodes changed in Figure 1.
 
 ```{r}
-#| label = "viewers_plot"
-plot(season_data$viewers, type="l", col="red", lwd=5, xlab = "Episode number", ylab = "1st day TV viewers in the US (millions)")
+plot(season_data$viewers, type="l", col="red", lwd=2, 
+     xlab = "Episode number", 
+     ylab = "1st day TV viewers in the US (millions)",
+     main = paste("Season", params$season_no, "Viewers"))
 ```
 
 ***

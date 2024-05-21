@@ -223,13 +223,7 @@ plot(pressure)
 
 You can also [use Python in Quarto with Jupyter Notebook](https://quarto.org/docs/computations/python.html) or even use it interchangeably with other languages:
 
-```{python}
-import pandas
-flights = pandas.read_csv("../Data/flights.csv")
-flights = flights[flights['dest'] == "ORD"]
-flights = flights[['carrier', 'dep_delay', 'arr_delay']]
-flights = flights.dropna()
-```
+
 
 ```{r}
 library(ggplot2)
