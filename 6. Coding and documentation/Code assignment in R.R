@@ -1,69 +1,117 @@
+#Hanwen Miao(436819)
+#Load packages
+library(dplyr)
+library(readxl)
+library(glue)
+library(stringr)
+library(Hmisc)
 
-# Sets the path to the parent directory of RR classes
-setwd("Z:\\File folders\\Teaching\\Reproducible Research\\2023\\Repository\\RRcourse2023\\6. Coding and documentation")
+###### Sets the path (I Copied the data file to this path)
+path <- '/Users/lulut/Desktop/forked/6. Coding and documentation'
+setwd(path)
+task_datapath <- paste(path, '/Data/onet_tasks.csv', sep = '')
+isco_datapath <- paste(path, '/Data/Eurostat_employment_isco.xlsx', sep = '')
+######Load data by function
+data_read <- function(data_path, sheet_name = NULL){
+  names <- strsplit(data_path, split = '\\.')[[1]]
+  suffix <- names[length(names)]
+  
+  # Ensure the file extension is either 'csv' or 'xlsx'
+  stopifnot(suffix %in% c('csv', 'xlsx'))
+  
+  # If the file is an Excel file, ensure sheet_name is not NULL
+  if (suffix == 'xlsx'){
+    stopifnot(!is.null(sheet_name))
+  }
+  
+  # Read the data based on the file type
+  if (suffix == 'csv'){ # Process CSV file
+    data <- read.csv(data_path, stringsAsFactors = FALSE)
+  } else { # Process Excel file
+    data <- read_xlsx(data_path, sheet = sheet_name)
+  }
+  
+  # Return the read data
+  return(data)
+}
+# read task data file path
+task_datapath <- "C:/Users/lulut/Desktop/forked/Data/onet_tasks.csv"
+task_data <- data_read(task_datapath)
+head(task_data)
 
-#   Import data from the O*NET database, at ISCO-08 occupation level.
-# The original data uses a version of SOC classification, but the data we load here
-# are already cross-walked to ISCO-08 using: https://ibs.org.pl/en/resources/occupation-classifications-crosswalks-from-onet-soc-to-isco/
-
-# The O*NET database contains information for occupations in the USA, including
-# the tasks and activities typically associated with a specific occupation.
-
-task_data = read.csv("Data\\onet_tasks.csv")
 # isco08 variable is for occupation codes
 # the t_* variables are specific tasks conducted on the job
 
 # read employment data from Eurostat
 # These datasets include quarterly information on the number of workers in specific
 # 1-digit ISCO occupation categories. (Check here for details: https://www.ilo.org/public/english/bureau/stat/isco/isco08/)
-library(readxl)                     
+#Read data and create variables
+iscos <- list()
+for (i in 1 : 9) {
+  file <- data_read(isco_datapath, sheet_name = paste("ISCO", i, sep = ''))
+  iscos[[i]] <- file
+}
+print(glue('Length of iscos: {length(iscos)}.'))
+for (i in 1:9) {
+  assign(paste0("isco", i), data_read(isco_datapath, sheet_name = paste0("ISCO", i)))
+}
 
-isco1 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO1")
-isco2 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO2")
-isco3 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO3")
-isco4 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO4")
-isco5 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO5")
-isco6 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO6")
-isco7 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO7")
-isco8 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO8")
-isco9 <- read_excel("Data\\Eurostat_employment_isco.xlsx", sheet="ISCO9")
 
 # We will focus on three countries, but perhaps we could clean this code to allow it
 # to easily run for all the countries in the sample?
+merge_tables <- function(data_list, selected_countries) {
+  library(glue)
+  
+  # Calculate the total number of workers in each selected country
+  totals <- list()
+  for (country in selected_countries) {
+    total <- 0
+    for (i in 1:length(data_list)) {
+      if (country %in% colnames(data_list[[i]])) {
+        total <- total + data_list[[i]][[country]]
+        data_list[[i]][['ISCO']] <- i
+      }
+    }
+    totals[[glue('total_{country}')]] <- total
+  }
+  
+  # Merge all data
+  merged_data <- data_list[[1]]
+  for (i in 2:length(data_list)) {
+    merged_data <- rbind(merged_data, data_list[[i]])
+  }
+  
+  return(list(merged_data = merged_data, totals = totals))
+}
 
-# This will calculate worker totals in each of the chosen countries.
-total_Belgium = isco1$Belgium + isco2$Belgium + isco3$Belgium + isco4$Belgium + isco5$Belgium + isco6$Belgium + isco7$Belgium + isco8$Belgium + isco9$Belgium
-total_Spain = isco1$Spain + isco2$Spain + isco3$Spain + isco4$Spain + isco5$Spain + isco6$Spain + isco7$Spain + isco8$Spain + isco9$Spain
-total_Poland = isco1$Poland + isco2$Poland + isco3$Poland + isco4$Poland + isco5$Poland + isco6$Poland + isco7$Poland + isco8$Poland + isco9$Poland
-
-# Let's merge all these datasets. We'll need a column that stores the occupation categories:
-isco1$ISCO <- 1
-isco2$ISCO <- 2
-isco3$ISCO <- 3
-isco4$ISCO <- 4
-isco5$ISCO <- 5
-isco6$ISCO <- 6
-isco7$ISCO <- 7
-isco8$ISCO <- 8
-isco9$ISCO <- 9
-
-# and this gives us one large file with employment in all occupations.
-all_data <- rbind(isco1, isco2, isco3, isco4, isco5, isco6, isco7, isco8, isco9)
-
-# We have 9 occupations and the same time range for each, so we an add the totals by
+# We have 9 occupations and the same time range for each, so we can add the totals by
 # adding a vector that is 9 times the previously calculated totals
-all_data$total_Belgium <- c(total_Belgium, total_Belgium, total_Belgium, total_Belgium, total_Belgium, total_Belgium, total_Belgium, total_Belgium, total_Belgium) 
-all_data$total_Spain <- c(total_Spain, total_Spain, total_Spain, total_Spain, total_Spain, total_Spain, total_Spain, total_Spain, total_Spain) 
-all_data$total_Poland <- c(total_Poland, total_Poland, total_Poland, total_Poland, total_Poland, total_Poland, total_Poland, total_Poland, total_Poland) 
+# Add total number of workers and proportion columns
+columns <- names(totals)
+for (i in 1:length(columns)) {
+  if (columns[i] %in% names(totals)) {
+    value <- totals[[columns[i]]]
+    merged_data[[columns[i]]] <- rep(value, nrow(merged_data))
+    country <- strsplit(columns[i], split = '_')[[1]]
+    country <- country[length(country)]
+    if (country %in% colnames(merged_data)) {
+      merged_data[[glue('share_{country}')]] <- merged_data[[country]] / merged_data[[columns[i]]]
+    }
+  } else {
+    print(glue("Warning: {columns[i]} not found in totals"))
+  }
+}
 
-# And this will give us shares of each occupation among all workers in a period-country
-all_data$share_Belgium = all_data$Belgium/all_data$total_Belgium
-all_data$share_Spain = all_data$Spain/all_data$total_Spain
-all_data$share_Poland = all_data$Poland/all_data$total_Poland
+return (merged_data)
+}
+
+selected_countries <- c('Belgium', 'Spain', 'Poland')
+merged_data <- merge_tables(data_list = iscos, 
+                            selected_countries = selected_countries)
+head(merged_data)
+View(merged_data)
 
 # Now let's look at the task data. We want the first digit of the ISCO variable only
-library(stringr)
-
 task_data$isco08_1dig <- str_sub(task_data$isco08, 1, 1) %>% as.numeric()
 
 # And we'll calculate the mean task values at a 1-digit level 
@@ -83,9 +131,7 @@ aggdata$isco08 <- NULL
 # 4.A.4.a.1	Interpreting the Meaning of Information for Others
 
 #Let's combine the data.
-library(dplyr)
-
-combined <- left_join(all_data, aggdata, by = c("ISCO" = "isco08_1dig"))
+combined <- left_join(merged_data, aggdata, by = c("ISCO" = "isco08_1dig"))
 
 # Traditionally, the first step is to standardise the task values using weights 
 # defined by share of occupations in the labour force. This should be done separately
