@@ -1,0 +1,24 @@
+---
+title: "Viewership Report on *Skam*"
+author: "Hanwen Miao (436819)"
+date: today 
+date-format: short
+format: 
+  html:
+    toc: true
+    toc-depth: 2
+    toc-expand: 3
+    toc-location: left
+execute:
+  echo: fenced
+title-block-banner: true
+title-block-banner-color: cyan
+number-sections: true
+number-depth: 3
+editor_options: 
+  markdown: 
+    wrap: 72
+urlcolor: purple
+theme: Mermaid
+link-citations: yes
+---
