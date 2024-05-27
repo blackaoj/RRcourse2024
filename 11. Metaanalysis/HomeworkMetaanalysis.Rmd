@@ -1,0 +1,96 @@
+---
+title: "AssignmentMetaanalysis"
+author: "hanwenmiao 436819"
+date: "2024-05-27"
+output: html_document
+---
+##Load the packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(meta)
+library(metafor)
+library(dplyr)
+```
+##Import the data.
+```{r}
+setwd("C:/Users/lulut/Desktop/forked/11. Metaanalysis")
+data <- read_excel("data/metaanalysis_data.xlsx")
+head(data)
+```
+##Set two groups of variables. The first group - control group.(Mean_boys_play_male and Mean_girls_play_female). Then calculate the effect size and combine the effect.
+```{r}
+m.control <- metacont(
+  n.e = N_boys,
+  mean.e = Mean_boys_play_male,
+  sd.e = SD_boys_play_male,
+  n.c = N_girls,
+  mean.c = Mean_girls_play_female,
+  sd.c = SD_girls_play_female,
+  data = data,
+  studlab = Study,
+  fixed = TRUE,
+  random = TRUE
+)
+summary(m.control)
+##Draw a forest plot
+m.control %>% forest(sortvar=TE)
+```
+## According to the forest plot. we can see that most of them gather around true effect.
+## Use metareg to check if methods and quality affect results
+```{r}
+regression1 <- metareg(m.control, formula = `Parental opinion` + `Representativeness of cases`)
+summary(regression1)
+```
+##Based on the results of this model, the p-value is higher than the 5% significance level. Parental opinion and Representativeness of cases do not have a significant effect on results.
+##Use metareg to check if author gender affects results
+```{r}
+author_gender_reg1 <- metareg(m.control, formula = `Female authors` + `Male authors`)
+summary(author_gender_reg1)
+```
+##According to the result. Female authors and Male authors do not have a significant effect on the model results at the 5% significance level.
+##Create a 'contour-enhanced' funnel plot.
+```{r}
+contour_levels <- c(0.90, 0.95, 0.99)
+contour_colors <- c("darkblue", "blue", "lightblue")
+funnel(m.control, contour = contour_levels, col.contour = contour_colors)
+legend("topright", c("p < 0.10", "p < 0.05", "p < 0.01"), bty = "n", fill = contour_colors)
+```
+##The funnel plot shows that most data points are around medium standard errors. And the plot is roughly symmetric, suggesting that there is no publication bias.
+
+##The second group of variables:(Mean_boys_play_female and Mean_girls_play_male) And check the effect size.
+```{r}
+m.control2 <- metacont(
+  n.e = N_boys,
+  mean.e = Mean_boys_play_female,
+  sd.e = SD_boys_play_female,
+  n.c = N_girls,
+  mean.c = Mean_girls_play_male,
+  sd.c = SD_girls_play_male,
+  data = data,
+  studlab = data$Study,
+  fixed = TRUE,
+  random = TRUE
+)
+summary(m.control2)
+
+##Draw a forest plot
+m.control2 %>% forest(sortvar=TE)
+```
+
+```{r}
+## Use metareg to check if methods and quality affect results. Repeat the previous steps. 
+regression2 <- metareg(m.control2, formula = `Parental opinion` + `Representativeness of cases`)
+summary(regression2)
+```
+##Parental opinion is not significant .
+
+```{r}
+author_gender_reg2 <- metareg(m.control2, formula = `Female authors` + `Male authors`)
+summary(author_gender_reg2)
+```
+##We can see Authors' genders do not affect results.
+```{r}
+funnel(m.control2, contour = contour_levels, col.contour = contour_colors)
+legend("topright", c("p < 0.10", "p < 0.05", "p < 0.01"), bty = "n", fill = contour_colors)
+```
