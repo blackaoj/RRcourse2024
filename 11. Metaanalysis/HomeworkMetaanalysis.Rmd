@@ -42,7 +42,7 @@ m.control %>% forest(sortvar=TE)
 regression1 <- metareg(m.control, formula = `Parental opinion` + `Representativeness of cases`)
 summary(regression1)
 ```
-##Based on the results of this model, the p-value is higher than the 5% significance level. Parental opinion and Representativeness of cases do not have a significant effect on results.
+##Based on the QM statistic results, these two variables are not significant. However, to confirm the significance of each variable,Parental opinion has an effect on the results at the 5% significance level.
 ##Use metareg to check if author gender affects results
 ```{r}
 author_gender_reg1 <- metareg(m.control, formula = `Female authors` + `Male authors`)
